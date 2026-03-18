@@ -84,11 +84,10 @@ arContents.forEach(async (content) => {
   if (content.renderType === 'model') {
     el.setAttribute('gltf-model', content.objectPath);
     el.setAttribute('animation-mixer', '');
-    
-    // 3. 移動の軌跡（アニメーション）をJSONから反映
-    if (info.animation) {
-      el.setAttribute('animation', info.animation);
-    }
+    if (info.animation) el.setAttribute('animation', info.animation);
+  } else {
+    // videoやimageなどの場合は src を指定する
+    el.setAttribute('src', content.objectPath);
   }
 
   anchor.appendChild(el);
