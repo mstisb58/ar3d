@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Multi-AR System</title>
+    
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
+
+    <style>
+        .arjs-loader {
+            height: 100%; width: 100%; position: absolute; top: 0; left: 0;
+            background-color: rgba(0, 0, 0, 0.8); z-index: 9999;
+            display: flex; justify-content: center; align-items: center; color: white;
+            font-family: sans-serif;
+        }
+        #ui-overlay {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; background: rgba(0,0,0,0.5); color: white;
+            padding: 10px 20px; border-radius: 20px; font-size: 14px;
+            pointer-events: none; text-align: center;
+        }
+    </style>
+</head>
+
+<body style="margin: 0px; overflow: hidden;">
+    <div class="arjs-loader"><div>Loading AR Assets...</div></div>
+
+    <div id="ui-overlay">カメラをマーカーまたは画像に向けてください</div>
+
+    <a-scene
+        vr-mode-ui="enabled: false;"
+        renderer="logarithmicDepthBuffer: true;"
+        embedded
+        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+        
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script src="js/config.js"></script>
+    <script>
+        const scene = document.querySelector('a-scene');
+        const loader = document.querySelector('.arjs-loader');
+
+        // シーンのロード完了イベント
+        scene.addEventListener('loaded', () => {
+            console.log('Scene Loaded');
+            loader.style.display = 'none';
+        });
+
+        // config.js の arContents をループして要素を生成
+arContents.forEach(async (content) => {
+  // 1. 各ディレクトリの info.json を読み込む
+  const response = await fetch(`assets/${content.id}/info.json`);
+  const info = await response.json();
+
+  let anchor = (content.type === 'nft') ? 
+      document.createElement('a-nft') : document.createElement('a-marker');
+  
+  // トラッカーの設定
+  if (content.type === 'nft') {
+      anchor.setAttribute('type', 'nft');
+      anchor.setAttribute('url', content.trackerPath);
+  } else {
+      anchor.setAttribute('type', 'pattern');
+      anchor.setAttribute('url', content.trackerPath);
+  }
+
+  // 2. 表示物の作成
+  const el = document.createElement(content.renderType === 'video' ? 'a-video' : 'a-entity');
+  
+  // JSONから取得した値を反映
+  el.setAttribute('scale', info.scale || "1 1 1");
+  el.setAttribute('position', info.position || "0 0 0");
+  el.setAttribute('rotation', info.rotation || "0 0 0");
+
+  if (content.renderType === 'model') {
+    el.setAttribute('gltf-model', content.objectPath);
+    el.setAttribute('animation-mixer', '');
+    
+    // 3. 移動の軌跡（アニメーション）をJSONから反映
+    if (info.animation) {
+      el.setAttribute('animation', info.animation);
+    }
+  }
+
+  anchor.appendChild(el);
+  scene.appendChild(anchor);
+});
+
+        // スマホでの動画再生制限を解除するための儀式
+        window.addEventListener('click', () => {
+            const videos = document.querySelectorAll('video');
+            videos.forEach(v => {
+                v.muted = true;
+                v.play().catch(e => console.log("Video play blocked", e));
+            });
+        }, { once: true });
+
+    </script>
+</body>
+</html>
