@@ -44,11 +44,16 @@
         const scene = document.querySelector('a-scene');
         const loader = document.querySelector('.arjs-loader');
 
-        // シーンのロード完了イベント
-        scene.addEventListener('loaded', () => {
+        // シーンのロード完了イベント (すでにロード済みのケースへの対策)
+        const hideLoader = () => {
             console.log('Scene Loaded');
             loader.style.display = 'none';
-        });
+        };
+        if (scene.hasLoaded) {
+            hideLoader();
+        } else {
+            scene.addEventListener('loaded', hideLoader);
+        }
 
         // config.js の arContents をループして要素を生成
 arContents.forEach(async (content) => {
